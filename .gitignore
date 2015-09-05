@@ -1,0 +1,13 @@
+*~
+*.bak
+.DS_Store
+.buildpath
+.project
+.settings
+
+Thumbs.db
+desktop.ini
+
+/composer.lock
+composer.phar
+/vendor

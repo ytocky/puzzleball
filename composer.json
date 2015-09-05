@@ -1,0 +1,22 @@
+{
+    "name": "ytocky/puzzleball",
+    "description": "Parameter Receiver",
+    "keywords": ["validate", "parameter"],
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://github.com/ytocky/puzzleball",
+    "authors": [
+      {
+        "name": "ytocky",
+        "email": "info@tocky.sakura.ne.jp"
+      }
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "4.*"
+    },
+    "autoload": {
+      "psr-0": {
+        "PuzzleBall": "src/"
+      }
+    }
+}
