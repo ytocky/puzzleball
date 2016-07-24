@@ -1,39 +1,39 @@
 # PuzzleBall
 PuzzleBall is a PHP library that check incoming variables.
 
-# �T�v
+# 概要
 
-����́A�o���f�[�V�����i���͒l���؁j�Ƃ͈قȂ�A�v���[�`�ŁAWeb�A�v���P�[�V���������҂����p�����[�^�l�݂̂��󂯎�邱�Ƃ�ۏႷ��A���C�u�����ł��B  
+これは、バリデーション（入力値検証）とは異なるアプローチで、Webアプリケーションが期待したパラメータ値のみを受け取ることを保障する、ライブラリです。  
 
-�c�����ɗV�񂾁i��������Ȃ��j�m��ߋ�A�ۂ�O�p�Ȃǂ̌����J�����{�[���i�ȉ��A�p�Y���{�[���j���v���o���Ă݂Ă��������B���̃p�Y���{�[���ɂ́A�ۂ�O�p�̌`�������s�[�X�����邱�Ƃ��ł��܂��B�ۂ��s�[�X�́A�O�p�`�̌��ɂ͓���܂���B�ۂ��s�[�X�͊ۂ����ɁA�O�p�̃s�[�X�͎O�p�`�̌��ɁA�l�p���s�[�X�͎l�p�`�̌��ɂ����A����܂���B�~�j�J�[�̂�����������悤�Ƃ��Ă��A�{�[���ɂ͂��̂悤�Ȍ����J���Ă��Ȃ��̂ŁA����邱�Ƃ͂ł��܂���B�܂�A�{�[���̒��ɂ́A�{�[���̎����ɓK�����`�̃s�[�X�݂̂������Ă��邱�ƂɂȂ�܂��B
+幼い時に遊んだ（かもしれない）知育玩具、丸や三角などの穴が開いたボール（以下、パズルボール）を思い出してみてください。このパズルボールには、丸や三角の形をしたピースを入れることができます。丸いピースは、三角形の穴には入りません。丸いピースは丸い穴に、三角のピースは三角形の穴に、四角いピースは四角形の穴にしか、入りません。ミニカーのおもちゃを入れようとしても、ボールにはそのような穴が開いていないので、入れることはできません。つまり、ボールの中には、ボールの持つ穴に適した形のピースのみが入っていることになります。
 
-����Ɠ������Ƃ��AWeb�A�v���P�[�V�����ł��s�����Ƃ������݂ł��B
+これと同じことを、Webアプリケーションでも行おうという試みです。
 
-# �Љ�
+# 紹介
 
-Web�A�v���P�[�V�����ł́A��ʂ�
-> * �l���󂯎��  
-��
-* �o���f�[�V�����i���͒l���؁j����  
-��
-* ��������
+Webアプリケーションでは、一般に
+> * 値を受け取る  
+↓
+* バリデーション（入力値検証）する  
+↓
+* 処理する
 
-�Ƃ������ɏ������s���܂��B�o���f�[�V�����́A���S�Ŗ��̋N����Ȃ�Web�A�v���P�[�V�������J�������ŕK�{�̏����ł��B�������A�������ɘR�ꂪ��������A��������������ӂ����肵�₷�������ł�����܂��B���������p�����[�^�̒�`�������܂��Ƃ����ꍇ���炠��܂��B  
-�o���f�[�V�������s�\���ł����Ă�����Ȓl���󂯎�������͐���ɓ��삵�Ă��܂��܂��B���̂��Ƃ���A�u�o���f�[�V�����������������ׂ��v�Ƃ����̂́A�������� **�u����@�v** �ɗ��܂��Ă���̂�����ł͂Ȃ����Ɗ����Ă��܂��B   
+という順に処理を行います。バリデーションは、安全で問題の起こらないWebアプリケーションを開発する上で必須の処理です。しかし、実装時に漏れが生じたり、そもそも実装を怠ったりしやすい処理でもあります。そもそもパラメータの定義があいまいという場合すらあります。  
+バリデーションが不十分であっても正常な値を受け取った時は正常に動作してしまいます。このことから、「バリデーション処理を実装すべし」というのは、実装時の **「お作法」** に留まっているのが現状ではないかと感じています。   
 
-�����ŁA����@�ł͂Ȃ��A���͒l���؂����Ȃ��ƁA�A�v���P�[�V�����͎󂯎��Ȃ��悤�ɂ��܂��B  
-���̃��C�u�����́Arequire�������_�ŁA$_GET, $_POST, $_COOKIE, $_ENV��unset�i����`��ԂɁj���܂��B�܂�A
+そこで、お作法ではなく、入力値検証をしないと、アプリケーションは受け取れないようにします。  
+このライブラリは、requireした時点で、$_GET, $_POST, $_COOKIE, $_ENVをunset（未定義状態に）します。つまり、
 ~~~
 require_once 'PuzzleBall.php';
 var_dump($_GET);
 ~~~
-�����s����ƁA
+を実行すると、
 
 > Notice: Undefined variable: _GET in ***.php  
 
-�ƂȂ�܂��B����ł́A�A�v���P�[�V�����́A�����l���󂯎��܂���ˁB
+となります。これでは、アプリケーションは、何も値を受け取れませんね。
 
-�����ŁA�u���̂悤�Ȓl�ł���Ύ󂯎��v�Ƃ������[�����`���APuzzleBall���쐬���܂��B�p�Y���{�[���Ɍ���������悤�ɁB�����āA�{�[���̒��ɓ����Ă���p�[�c�����o���Ďg���܂��B
+ここで、「このような値であれば受け取る」というルールを定義し、PuzzleBallを作成します。パズルボールに穴をあけるように。そして、ボールの中に入っているパーツを取り出して使います。
 
 ~~~
 $rule['GET'] = [
@@ -46,25 +46,25 @@ $ball = new PuzzleBall($rule);
 var_dump($ball->id);
 ~~~
 
-����ŁA$ball->id�ɂ́A0�`100�̐����݂̂����邱�ƂɂȂ�܂��B
+これで、$ball->idには、0～100の整数のみが入ることになります。
 
-�{�[�������ɂ̓��[�����K�v�ł��̂ŁA�l�̎d�l��݌v�̒i�K�ł��炩���ߖ��m�ɂ��Ă����K�v������܂��B�����������[���ɂ́A�݌v��̎d�l�����̂܂ܔ��f����邱�ƂɂȂ�܂��B�@�@
+ボールを作るにはルールが必要ですので、値の仕様を設計の段階であらかじめ明確にしておく必要があります。実装したルールには、設計上の仕様がそのまま反映されることになります。　　
 
-�܂��A "http://�`.php?id=10" �Ƃ������N�G�X�g���s��ꂽ�ۂ́A
-$_GET['id'] �ɂ� '10' �Ƃ���������(string)������܂����A$ball->id ����́A10�Ƃ�������(int)�������܂��B����́A���[���Ɂu�������󂯎��v�Ɩ������Ă��邱�Ƃ���A�{�[�����Ő����ɕϊ����Ă��邽�߂ł��B�R�[�h�ł́A$ball->id�̒l�͌����ɐ����Ƃ��Ĉ����Ă悢�ł��B
+また、 "http://～.php?id=10" というリクエストが行われた際は、
+$_GET['id'] には '10' という文字列(string)が入りますが、$ball->id からは、10という整数(int)が得られます。これは、ルールに「整数を受け取る」と明示していることから、ボール内で整数に変換しているためです。コードでは、$ball->idの値は厳密に整数として扱ってよいです。
 
 
-# �g�����̑�G�c�Ȑ���
+# 使い方の大雑把な説明
 
-## 1. require����
+## 1. requireする
 
 ~~~
 require_once 'PuzzleBall.php';
 ~~~
 
-���̎��_�ŁA$_GET, $_POST, $_ENV, $_COOKIE �͖���`��ԂɂȂ��Ă��܂��B
+この時点で、$_GET, $_POST, $_ENV, $_COOKIE は未定義状態になっています。
 
-## 2. ���[�������
+## 2. ルールを作る
 
     $rule['GET'] = array(
       'page' => array(
@@ -73,7 +73,7 @@ require_once 'PuzzleBall.php';
       ),
     );
 
-PHP5.4�ȍ~�Ȃ�
+PHP5.4以降なら
 
     $rule['GET'] = [
       'page' => [
@@ -82,89 +82,89 @@ PHP5.4�ȍ~�Ȃ�
       ]
     ];
 
-## 3. �{�[�������
+## 3. ボールを作る
 
     $ball = new PuzzleBall($rule);
 
-���[������Ƀ{�[�������A������GET�p�����[�^��N�b�L�[�Ȃǂ��󂯎��܂��B  
-�������[���O�̒l���n����Ă����ꍇ�́A�����𒆒f���ė�O(BallException)�𓊂��܂��B  
+ルールを基にボールを作り、同時にGETパラメータやクッキーなどを受け取ります。  
+もしルール外の値が渡されていた場合は、処理を中断して例外(BallException)を投げます。  
 
-�܂�PuzzleBall�́A���[�U�[�ɓ��͂ɂ������l�ɑ΂��āA�T�[�o���ɕςȒl�𑗂���Ȃ��悤�ɁA�u���E�U���ő��M�O�Ƀ��[�U�[�̓��͒l���`�F�b�N���Ă��邱�Ƃ����҂��Ă��܂��BHTML5�̃t�H�[���̋@�\���g���Đ���������AJavaScript�Ń`�F�b�N����ȂǁA�s���Ă��������B  
-�������邱�ƂŁA�T�[�o�[�ɑ��M�����l�́AWeb�A�v���P�[�V������������l�A�������̓��[�U�[�����͂������̂��u���E�U���Ń`�F�b�N���Ă�����́A�̂ǂ��炩�ɂȂ�܂��B���̂��߁A���ӂ̂Ȃ��A�N�Z�X�ł���΁A��O�𓊂��邱�Ƃ͂���܂���B��O�𓊂���̂́A���ӂ̂���A�N�Z�X���A�@�B�I�ȃA�N�Z�X���AWeb�A�v���P�[�V�����̃o�O�݂̂ɂȂ�͂��ł��B
+つまりPuzzleBallは、ユーザーに入力にさせた値に対して、サーバ側に変な値を送りつけないように、ブラウザ側で送信前にユーザーの入力値をチェックしていることを期待しています。HTML5のフォームの機能を使って制限したり、JavaScriptでチェックするなど、行ってください。  
+こうすることで、サーバーに送信される値は、Webアプリケーションが作った値、もしくはユーザーが入力したものをブラウザ側でチェックしているもの、のどちらかになります。このため、悪意のないアクセスであれば、例外を投げることはありません。例外を投げるのは、悪意のあるアクセスか、機械的なアクセスか、Webアプリケーションのバグのみになるはずです。
 
-## 4. �l���{�[��������o��
+## 4. 値をボールから取り出す
 
-$_GET �� $_POST �̑���ɁA
+$_GET や $_POST の代わりに、
 
     $ball->page
 
-$_COOKIE �̑���ɁA
+$_COOKIE の代わりに、
 
     $ball->cookie('page')
 
-$_ENV �̑���ɁA
+$_ENV の代わりに、
 
     $ball->env('HTTP_USER_AGENT')
 
-# �{�[���̍���
+# ボールの作り方
 
 ```
 $ball = new PuzzleBall($rule, $config);
 ```
 
-$rule : ���[���i��q�j
-$config : �R���t�B�O�i��q�j
+$rule : ルール（後述）
+$config : コンフィグ（後述）
 
-## ���[���̏�����
+## ルールの書き方
 
 ```
-$rule['�\�[�X'] = array(
-	'�p�����[�^��' => array( 'type'=>�^�C�v, ['length'=>�����w��,] ['range'=>�͈͎w��] ),
-	'�p�����[�^��' => array( 'type'=>�^�C�v, ['length'=>�����w��,] ['range'=>�͈͎w��] ),
+$rule['ソース'] = array(
+	'パラメータ名' => array( 'type'=>タイプ, ['length'=>長さ指定,] ['range'=>範囲指定] ),
+	'パラメータ名' => array( 'type'=>タイプ, ['length'=>長さ指定,] ['range'=>範囲指定] ),
     ....
 );
 ```
-�܂���
+または
 ```
 $rule = array(
-    '�\�[�X' => array(
-	    '�p�����[�^��' => array( 'type'=>�^�C�v, ['length'=>�����w��,] ['range'=>�͈͎w��] ),
-	    '�p�����[�^��' => array( 'type'=>�^�C�v, ['length'=>�����w��,] ['range'=>�͈͎w��] ),
+    'ソース' => array(
+	    'パラメータ名' => array( 'type'=>タイプ, ['length'=>長さ指定,] ['range'=>範囲指定] ),
+	    'パラメータ名' => array( 'type'=>タイプ, ['length'=>長さ指定,] ['range'=>範囲指定] ),
         ....
     ),
 );
 ```
-�ȂǁB
+など。
 
-�z��̏ꍇ�́A
+配列の場合は、
 ```
-$rule['�\�[�X'] = array(
-	'�p�����[�^��[]' = array(
-		'index' => array( 'type'=>�^�C�v, ['length'=>�����w��,] ['range'=>�͈͎w��] ),
-		'value' => array( 'type'=>�^�C�v, ['length'=>�����w��,] ['range'=>�͈͎w��] ),
+$rule['ソース'] = array(
+	'パラメータ名[]' = array(
+		'index' => array( 'type'=>タイプ, ['length'=>長さ指定,] ['range'=>範囲指定] ),
+		'value' => array( 'type'=>タイプ, ['length'=>長さ指定,] ['range'=>範囲指定] ),
 	),
 );
 ```
-�܂��́A"a[]=1&a[]=2&a[]=3&..." �Ƃ����n�����������ꍇ�́Aindex�ɂ��Ă͌��ł��w��ł��܂��B 
+または、"a[]=1&a[]=2&a[]=3&..." という渡され方をする場合は、indexについては個数でも指定できます。 
 ```
-$rule['�\�[�X'] = array(
-	'�p�����[�^��[]' = array(
-		'index' => array( 'maxCount'=>���̏�� ),
-		'value' => array( 'type'=>�^�C�v, ['length'=>�����w��,] ['range'=>�͈͎w��] ),
+$rule['ソース'] = array(
+	'パラメータ名[]' = array(
+		'index' => array( 'maxCount'=>個数の上限 ),
+		'value' => array( 'type'=>タイプ, ['length'=>長さ指定,] ['range'=>範囲指定] ),
 	),
 );
 ```
 
 
-|���O|����|
+|名前|説明|
 |----|----|
-|�\�[�X|GET, POST, ENV, COOKIE|
-|�p�����[�^��|���̖��̒ʂ�A�p�����[�^���Bids[]�̂悤�ɁA[]��t����ƁA�z������߂�Ƃ��Ĉ����܂��B|
-|�^�C�v|���̍��ڂŐ���|
-|�����w��|array( 'min'=>�ŏ��l, 'max'=>�ő�l)|
-|�͈͎w��|array( 'min'=>�ŏ��l, 'max'=>�ő�l)|
+|ソース|GET, POST, ENV, COOKIE|
+|パラメータ名|その名の通り、パラメータ名。ids[]のように、[]を付けると、配列を求めるとして扱います。|
+|タイプ|次の項目で説明|
+|長さ指定|array( 'min'=>最小値, 'max'=>最大値)|
+|範囲指定|array( 'min'=>最小値, 'max'=>最大値)|
 
-�������߂̏������́A
+おすすめの書き方は、
 ```
 $pattern['name'] = array('type'=>PuzzleBall::UTF8, 'length'=>array('min'=>1, 'max'=>20);
 $rule['POST'] = array(
@@ -173,11 +173,11 @@ $rule['POST'] = array(
     'friends_name[]' => $pattern['name'],
 );
 ```
-�̂悤�ɁA�p�����[�^���Ƃ͕ʂɃ��[�����`���銴���i�����p�����[�^���Ȃ�A�ǂ��Ŏ󂯎���Ă��������[����K�p����ł���H�j�B
+のように、パラメータ名とは別にルールを定義する感じ（同じパラメータ名なら、どこで受け取っても同じルールを適用するでしょ？）。
 
-�z����󂯎��ꍇ�́A�ȉ��̂悤�ɏ����܂��B
+配列を受け取る場合は、以下のように書きます。
 
-��ja[]=1&a[]=2&a[]=3&b[1]=4&b[10]=5&c[key]=6&c[name]=7
+例）a[]=1&a[]=2&a[]=3&b[1]=4&b[10]=5&c[key]=6&c[name]=7
 ```
 $rule_val = array( 'type'=>PuzzleBall::INTEGER, 'range'=>array('min'=>1, 'max'=>10) );
 $rules['GET'] = array(
@@ -196,82 +196,82 @@ $rules['GET'] = array(
 );
 ```
 
-## �^�C�v�ꗗ
+## タイプ一覧
 
-�󂯎��p�����[�^���ꂼ��ɑ΂��A�ǂ̂悤�Ȓl�����e���邩���w�肵�܂��B    
-* ������(type)
-* ����
- * ������̏ꍇ�́A���e���镶����(length)�A
- * �����̏ꍇ�́A���e����l�͈̔�(range)�A�܂��͋��e���錅��(length)
+受け取るパラメータそれぞれに対し、どのような値を許容するかを指定します。    
+* 文字種(type)
+* 条件
+ * 文字列の場合は、許容する文字列長(length)、
+ * 数字の場合は、許容する値の範囲(range)、または許容する桁数(length)
 
-range��length�̗������w�肵�Ă���ꍇ�́Arange�̎w��݂̂��`�F�b�N���܂��B   
+rangeとlengthの両方を指定している場合は、rangeの指定のみをチェックします。   
 
-|type|����|���l�^�ւ̕ϊ�|length�w��|range�w��|list�w��|
-|----|----|----------|---------|--------|
-|PuzzleBall::PATTERN|�C�ӂ̐��K�\���ɂ��`�F�b�N|-|-|-|-|
-|PuzzleBall::ALPHABET|�A���t�@�x�b�g(�啶��������)�̂�|-|��|-|-|
-|PuzzleBall::INTEGER|10�i���̐����̂�|**��**|��|��|-|
-|PuzzleBall::NUMBER|10�i���̐���(��+�L���A-�L���A�����_)�̂�|**��**|��|��|-|
-|PuzzleBall::DIGIT|10�i���̐���(��+�L���A-�L���A�����_)�̂�|-|��|-|-|
-|PuzzleBall::ALPHADIGIT|��L�A���t�@�x�b�g�Ɛ����̂�|-|��|-|-|
-|PuzzleBall::WHITELIST|���e����l��񋓂������X�g(�z���C�g���X�g)�Ɋ܂܂��l�̂�|-|-|-|��|
-|PuzzleBall::UTF8|UTF8�̕�����(���s�����܂܂�)�̂�|-|��|-|-|
-|PuzzleBall::UTF8TEXT|UTF8�̕�����(���s���������e)�̂�|-|��|-|-|
+|type|説明|数値型への変換|length指定|range指定|list指定|
+|----|----|--------------|----------|---------|--------|
+|PuzzleBall::PATTERN|任意の正規表現によるチェック|-|-|-|-|
+|PuzzleBall::ALPHABET|アルファベット(大文字小文字)のみ|-|○|-|-|
+|PuzzleBall::INTEGER|10進数の整数のみ|**○**|○|○|-|
+|PuzzleBall::NUMBER|10進数の数字(と+記号、-記号、小数点)のみ|**○**|○|○|-|
+|PuzzleBall::DIGIT|10進数の数字(と+記号、-記号、小数点)のみ|-|○|-|-|
+|PuzzleBall::ALPHADIGIT|上記アルファベットと数字のみ|-|○|-|-|
+|PuzzleBall::WHITELIST|許容する値を列挙したリスト(ホワイトリスト)に含まれる値のみ|-|-|-|○|
+|PuzzleBall::UTF8|UTF8の文字列(改行文字含まず)のみ|-|○|-|-|
+|PuzzleBall::UTF8TEXT|UTF8の文字列(改行文字を許容)のみ|-|○|-|-|
 
-INTEGER�̏ꍇ�́A�{�[������́Aint�^�̒l�������܂��B  
-NUMBER�̏ꍇ�́A�����_�������float�^�A�Ȃ����int�^�̒l�������܂��B  
-NUMBER �� DIGIT �̈Ⴂ�́A���l�^�ւ̕ϊ��̗L���݂̂ł��B  
+INTEGERの場合は、ボールからは、int型の値が得られます。  
+NUMBERの場合は、小数点があればfloat型、なければint型の値が得られます。  
+NUMBER と DIGIT の違いは、数値型への変換の有無のみです。  
 
-# ���[���ɍ���Ȃ��l�����M���ꂽ��
+# ルールに合わない値が送信されたら
 
-new �̎��_�ŁAPuzzleBall::BallException �Ƃ�����O�𓊂��܂��B
-��O�����Ăق����Ȃ��Ƃ��́AONGOING���R���t�B�O�Őݒ肵�܂��i��q�j�B
+new の時点で、PuzzleBall::BallException という例外を投げます。
+例外投げてほしくないときは、ONGOINGをコンフィグで設定します（後述）。
 
-�z��̂Ƃ��́A  
+配列のときは、  
 
-�P�[�X1)index��type���`���Ă���Ƃ�
+ケース1)indexにtypeを定義しているとき
 
-|�p�^�[��|EXCEPTION�w�莞|ONGIONG�w�莞|
+|パターン|EXCEPTION指定時|ONGIONG指定時|
 |----|----|----|
-|�s���Ȓl��������|��O������|��֒l��������|
-|�s����key��������|��O������|���̗v�f��j������|
-|�s����key�ƒl��������|��O������|���̗v�f��j������|
+|不正な値が来たら|例外投げる|代替値を代入する|
+|不正なkeyが来たら|例外投げる|その要素を破棄する|
+|不正なkeyと値が来たら|例外投げる|その要素を破棄する|
 
-�P�[�X2) index��maxCount���`���Ă���Ƃ�
+ケース2) indexにmaxCountを定義しているとき
 
-|�p�^�[��|EXCEPTION�w�莞|ONGIONG�w�莞|
+|パターン|EXCEPTION指定時|ONGIONG指定時|
 |----|----|----|
-|�s���Ȓl��������|��O������|���̗v�f��j������|
-|���̏���𒴂�����|��O������|���̗v�f��j������|
+|不正な値が来たら|例外投げる|その要素を破棄する|
+|個数の上限を超えたら|例外投げる|その要素を破棄する|
 
-# �R���t�B�O�̏�����
+# コンフィグの書き方
 
 ```
 $config = array(
-    '����' => �ݒ�l,
+    '項目' => 設定値,
 );
 ```
 
-|����|�ݒ�l|����|
+|項目|設定値|説明|
 |----|------|----|
-|behavior|PuzzleBall::EXCEPTION|��O�𓊂���(�K�蓮��)|
-||PuzzleBall::ONGOING|�������s|
-|fallback|�C�ӂ̒l|behavior�Ƃ��ď������s(ONGOING)��ݒ肵���ꍇ�ɗL���B���[���ɍ���Ȃ��l�����M���ꂽ�Ƃ��́A��֒l�B�w�肪�Ȃ��Ƃ��́ANULL�B|
+|behavior|PuzzleBall::EXCEPTION|例外を投げる(規定動作)|
+||PuzzleBall::ONGOING|処理続行|
+|fallback|任意の値|behaviorとして処理続行(ONGOING)を設定した場合に有効。ルールに合わない値が送信されたときの、代替値。指定がないときは、NULL。|
 
-# �R���t�B�O�ȊO�̐ݒ�
+# コンフィグ以外の設定
 
-�قƂ�ǂ̏ꍇ�Őݒ肷��K�v�͂Ȃ��Ǝv���܂����Arequire�O�ɒ萔���`���邱�ƂŁAPuzzleBall�̓���Ɋւ���ꕔ�ݒ��ς��邱�Ƃ��ł��܂��B
+ほとんどの場合で設定する必要はないと思いますが、require前に定数を定義することで、PuzzleBallの動作に関する一部設定を変えることができます。
 
-|����|�ݒ�l|����|
+|項目|設定値|説明|
 |----|------|----|
-|PUZZLEBALL_CLI_POST_MAX|���l|$_POST�̒l���A�W�����͂���󂯎�鎞�́A�ő啶�����B�w��̂Ȃ����́A10240�B|
+|PUZZLEBALL_CLI_POST_MAX|数値|$_POSTの値を、標準入力から受け取る時の、最大文字数。指定のない時は、10240。|
 
-��
+例
 ~~~
 define('PUZZLEBALL_CLI_POST_MAX', 20480);
 require_once 'PuzzleBall.php';
 ~~~
 
-# ���̂ق�
+# そのほか
 
-$_INPUT�́A�Ή��\�肠��܂���B
+$_INPUTは、対応予定ありません。
