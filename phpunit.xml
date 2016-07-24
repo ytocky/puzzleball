@@ -1,13 +1,6 @@
-<phpunit backupGlobals="false"
-		 backupStaticAttributes="false"
-		 bootstrap="vendor/autoload.php"
-		 cacheTokens="true"
-		 colors="true"
-		 convertErrorsToExceptions="true"
-		 convertNoticesToExceptions="true"
-		 convertWarningsToExceptions="true"
-		 processIsolation="true"
+<phpunit colors="true"
 		 syntaxCheck="true"
+         processIsolation="true"
 		 verbose="true">
 	<filter>
 		<whitelist addUncoveredFilesFromWhitelist="false">

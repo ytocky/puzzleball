@@ -1,6 +1,6 @@
 <?php
 // パラメータ受け入れクラス PuzzleBall
-// Copyright 2015 ytocky
+// Copyright 2016 ytocky
 
 require_once "BallException.php";
 
@@ -8,10 +8,11 @@ class PuzzleBall
 {
 	/*  ルールは、以下の種類を提供。
 		PATTERN		// パターン
-		INTEGER		// デフォルトは3桁。
-		ALPHABET	// デフォルトは3文字
-		NUMBER		// 数字。ピリオド、マイナス含む。
-		ALPHANUM	// 数字とアルファベット
+		INTEGER		// 整数のみ        (数値型への変換あり)
+		ALPHABET	// a-z, A-Z
+		NUMBER		// 0-9, +, -, .    (数値型への変換あり)
+		DIGIT		// 0-9, +, -, .
+		ALPHADIGIT	// 0-9, a-z, A-Z
 		WHITELIST	// 期待値を列挙した、ホワイトリスト形式
 		UTF8		// UTF8(改行なし)
 		UTF8TEXT	// UTF8(改行を許容)
@@ -20,8 +21,8 @@ class PuzzleBall
 	const INTEGER	= 'Integer';
 	const ALPHABET	= 'Alphabet';
 	const NUMBER	= 'Number';
-	const ALPHABET_NUMBER = 'AlphaNum';
-	const ALPHANUM	= 'AlphaNum';
+	const DIGIT 	= 'Digit';
+	const ALPHADIGIT= 'AlphaDigit';
 	const WHITELIST	= 'WhiteList';
 	const UTF8		= 'UTF8';
 	const UTF8TEXT	= 'UTF8Text';
@@ -30,62 +31,75 @@ class PuzzleBall
 	const EXCEPTION = 100;
 	const ONGOING = 101;
 
+	private static $pathPost = 'php://stdin';
+	private static $cliPostMax = 10240;
+
 	private $values = array();
 	private $cookies = array();
+	private $envs = array();
 
-	private $BAK_GET = array();
-	private $BAK_POST = array();
-	private $BAK_ENV = array();
-	private $BAK_COOKIE = array();
+	private static $BAK_GET = array();
+	private static $BAK_POST = array();
+	private static $BAK_ENV = array();
+	private static $BAK_COOKIE = array();
 
 	private $conf;
 	private $defaultConf = array(
 		'behavior' => '',
-		'cli_post_max' => 10240,
+		'fallback' => NULL,
 	);
+
+	public static function make()
+	{
+		// for CLI
+		if (count($_GET) == 0)
+		{
+			self::getGET();
+		}
+		if (count($_POST) == 0)
+		{
+			self::getPOST();
+		}
+		if (count($_COOKIE) == 0)
+		{
+			self::getCOOKIE();
+		}
+
+		if ( count($_GET)>0 && count(self::$BAK_GET)==0 )
+		{
+			self::$BAK_GET = $_GET;
+		}
+		if ( count($_POST)>0 && count(self::$BAK_POST)==0 )
+		{
+			self::$BAK_POST = $_POST;
+		}
+		if ( count($_ENV)>0 && count(self::$BAK_ENV)==0 )
+		{
+			self::$BAK_ENV = $_ENV;
+		}
+		if ( count($_COOKIE)>0 && count(self::$BAK_COOKIE)==0 )
+		{
+			self::$BAK_COOKIE = $_COOKIE;
+		}
+
+		/* all inputs are clear */
+		unset($_GET);
+		unset($_POST);
+		unset($_ENV);
+		unset($_COOKIE);
+	}
+
 
 	public function __construct($rules, $conf = NULL)
 	{
 		$this->conf = is_null($conf) ? $this->defaultConf : array_merge($this->defaultConf, $conf);
 
-		// for CLI
-		if (count($_GET) == 0)
-		{
-			$this->getGET();
-		}
-		if (count($_POST) == 0)
-		{
-			$this->getPOST();
-		}
-
-		if (count($_GET)>0)
-		{
-			$this->BAK_GET = $_GET;
-		}
-		if (count($_POST)>0)
-		{
-			$this->BAK_POST = $_POST;
-		}
-		if (count($_ENV)>0)
-		{
-			$this->BAK_ENV = $_ENV;
-		}
-		if (count($_COOKIE)>0)
-		{
-			$this->BAK_COOKIE = $_COOKIE;
-		}
-
 		$this->add($rules);
-
-		/* all inputs are clear */
-		$_GET = NULL;
-		$_POST = NULL;
-		$_ENV = NULL;
-		$_COOKIE = NULL;
 
 	} // end of function __construct()
 
-	private function getGET()
+
+	private static function getGET()
 	{
 		if (isset($_ENV['QUERY_STRING']))
 		{
@@ -94,32 +108,67 @@ class PuzzleBall
 	}
 
 
-	private function getPOST()
+	private static function getPOST()
 	{
-		if (defined('STDIN') && $_ENV['CONTENT_LENGTH'])
+		if (isset($_ENV['CONTENT_LENGTH']))
 		{
-			$maxlength = min($this->conf['cli_post_max'], $_ENV['CONTENT_LENGTH']);
-			$data = fread(STDIN, $this->conf['cli_post_max']);
+			if (defined('PUZZLEBALL_CLI_POST_MAX'))
+			{
+				$cliPostMax = PUZZLEBALL_CLI_POST_MAX;
+			}
+			else
+			{
+				$cliPostMax = self::$cliPostMax;
+			}
+
+			if (defined('PUZZLEBALL_POST_FILE_PATH'))
+			{
+				$path = PUZZLEBALL_POST_FILE_PATH;
+			}
+			else
+			{
+				// @codeCoverageIgnoreStart
+				$path = self::$pathPost;
+				// @codeCoverageIgnoreEnd
+			}
+			$fp = fopen($path,'r');
+			$maxlength = min($cliPostMax, $_ENV['CONTENT_LENGTH']);
+			$data = fread($fp, $maxlength);
+			fclose($fp);
 			parse_str($data, $_POST);
+		}
+	}
+
+	private static function getCOOKIE()
+	{
+		if (isset($_ENV['HTTP_COOKIE']))
+		{
+			$params = explode(';', $_ENV['HTTP_COOKIE']);
+			foreach ($params as $param) {
+				list($key, $val) = explode('=', $param, 2);
+				$key = trim($key);
+				$val = trim($val);
+				$_COOKIE[$key] = urldecode($val);
+			}
 		}
 	}
 
 	public function add($rules)
 	{
 		if (isset($rules['GET'])) {
-			$this->check($this->BAK_GET, $rules['GET'], $this->values);
+			$this->check(self::$BAK_GET, $rules['GET'], $this->values);
 		} // end of if (isset($rules['GET']))
 
 		if (isset($rules['POST'])) {
-			$this->check($this->BAK_POST, $rules['POST'], $this->values);
+			$this->check(self::$BAK_POST, $rules['POST'], $this->values);
 		} // end of if (isset($rules['POST']))
 
 		if (isset($rules['ENV'])) {
-			$this->check($this->BAK_ENV, $rules['ENV'], $this->values);
+			$this->check(self::$BAK_ENV, $rules['ENV'], $this->envs);
 		} // end of if (isset($rules['ENV']))
 
 		if (isset($rules['COOKIE'])) {
-			$this->check($this->BAK_COOKIE, $rules['COOKIE'], $this->cookies);
+			$this->check(self::$BAK_COOKIE, $rules['COOKIE'], $this->cookies);
 		} // end of if (isset($rules['COOKIE']))
 	}
 
@@ -139,12 +188,6 @@ class PuzzleBall
 				$this->checkArray($key, $list, $rule, $storage);
 
 			} else {
-				$defaultRule = array(
-					'type' => self::PATTERN,
-					'pattern' => '/^\d{1,10}$/',
-				);
-				$rule = array_merge($defaultRule, $rule);
-
 				if ( !isset($params[$key]) )
 				{
 					// 期待したパラメータが含まれないときは、無視して続行
@@ -161,74 +204,91 @@ class PuzzleBall
 
 
 	// 'key' and 'value'
-	private function checkArrayKeyAndValue($key, $index, $value, $rules, &$storage)
+	private function checkArrayIndexAndValue($key, $index, $value, $rules, &$storage)
 	{
 		// index check
-		$result = $this->checkone($index, $rules['key']);
+		$result_index = $this->checkone($index, $rules['index']);
 
-		if ($result)
+		if ($result_index['result'])
 		{
-			$result = $this->checkone($value, $rules['value']);
-			if ($result)
+			$result_val = $this->checkone($value, $rules['value']);
+			if ($result_val['result'])
 			{
-				$storage[$key][$index] = $value;
+				$storage[$key][$index] = $result_val['value'];
 			}
 			else
 			{
 				$this->assignFalseValue( $storage[$key][$index], $rules['value']);
 			}
 		}
+		else
+		{
+			$this->actionFail();
+		}
 	}
 
-
-	// 'keyvalue'
-	private function checkArrayKV($key, $index, $value, $rules, &$storage)
+	// 'maxCount' and 'value'
+	private function checkArrayValue($key, $value, $rules, &$storage)
 	{
-		$rule = $rules['keyvalue'];
-		if ( isset($rule[$index]) )
+		// count check
+		$count = (isset($storage[$key])) ? count($storage[$key]) : 0;
+		$result = ($count < $rules['maxCount']);
+
+		if ($result)
 		{
-			// 受け取るindex
-			$result = $this->checkone($value, $rule[$index]);
-
-			if ($result)
+			$result = $this->checkone($value, $rules['value']);
+			if ($result['result'])
 			{
-				$storage[$key][$index] = $value;
-			} else {
-				$this->assignFalseValue( $storage[$key][$index], $rule);
+				$storage[$key][] = $result['value'];
 			}
-
-		} else {
-			// 受け取らないindex
-			// NOP
+			else
+			{
+				$this->actionFail();
+			}
+		}
+		else
+		{
+			$this->actionFail();
 		}
 	}
 
 
 	private function checkArray($key, $params, $rule, &$storage)
 	{
-		// $value == array
-		foreach ($params as $index => $v)
+
+		if ( isset($rule['value']) )
 		{
-			if ( isset($rule['key']) && isset($rule['value']) )
+
+			if ( isset($rule['index']) )
 			{
-				$this->checkArrayKeyAndValue($key, $index, $v, $rule, $storage);
-			}
-			else if ( isset($rule['keyvalue']) )
+				foreach ($params as $index => $v)
+				{
+					$this->checkArrayIndexAndValue($key, $index, $v, $rule, $storage);
+				}
+			} // end of if ( isset($rule['index']) )
+			else if ( isset($rule['maxCount']) )
 			{
-				$this->checkArrayKV($key, $index, $v, $rule, $storage);
-			}
-		}
-	}
+				foreach ($params as $v)
+				{
+					$this->checkArrayValue($key, $v, $rule, $storage);
+				}
+			} // end of else if ( isset($rule['maxCount']) )
+
+		} // end of if ( isset($rule['value']) )
+
+	}  // end of checkArray()
 
 
 	private function checkValue($key, $value, $rule, &$storage)
 	{
 		$result = $this->checkone($value, $rule);
 
-		if ($result)
+		if ($result['result'])
 		{
-			$storage[$key] = $value;
-		} else {
+			$storage[$key] = $result['value'];
+		}
+		else
+		{
 			$this->assignFalseValue( $storage[$key], $rule);
 		}
 	}
@@ -241,19 +301,34 @@ class PuzzleBall
 			switch ($this->conf['behavior'])
 			{
 				case self::ONGOING:
-					// パラメータが渡されていないものとして、処理を続行。
-					$target = null;
+					if ( isset($rule['fallback']) )
+					{
+						$target = $rule['fallback'];
+					}
+					else if ( isset($this->conf['fallback']) )
+					{
+						$target = $this->conf['fallback'];
+					}
+					else
+					{
+						$target = NULL;
+					}
 					return;
 			}
 		}
 
-		if ( isset($rule['fallback']) )
+		throw new PuzzleBall\BallException();
+
+	}
+
+	private function actionFail()
+	{
+		if (isset($this->conf['behavior']) && $this->conf['behavior'] == self::ONGOING)
 		{
-			$target = $rule['fallback'];
-		} else {
-			throw new PuzzleBall\BallException();
+			return;
 		}
 
+		throw new PuzzleBall\BallException();
 	}
 
 
@@ -273,9 +348,9 @@ class PuzzleBall
 		$max = $range['max'];
 		if ($min <= $value && $value <= $max)
 		{
-			return true;
+			return array('result'=>true, 'value'=>$value );
 		}
-		return false;
+		return array('result'=>false, 'value'=>NULL );
 	}  // end of function checkRange()
 
 
@@ -286,51 +361,46 @@ class PuzzleBall
 		$length = mb_strlen($value, 'UTF-8');
 		if ($min <= $length && $length <= $max)
 		{
-			return true;
+			return array('result'=>true, 'value'=>$value);
 		}
-		return false;
+		return array('result'=>false, 'value'=>NULL );
 	}  // end of function checkLength()
 
 
 	private function check_Pattern($value, $rule)
 	{
-		return preg_match($rule['pattern'], $value);
+		return array('result'=>preg_match($rule['pattern'], $value), 'value'=>$value);
 	} // end of function check_Pattern()
 
 
 	private function check_Integer($value, $rule)
 	{
 
-		if ( $value === "" || !ctype_digit($value) )
+		if ( $value === "" || !preg_match('/\A[+-]?[0-9]+\z/',$value) )
 		{
-			return false;
-		}
-
-		$defaultrule = array( 'length' => array('min'=>1, 'max'=>3) );
-		if ( !isset($rule['range']) )
-		{
-			$rule = array_merge($defaultrule, $rule);
+			return array('result'=>false, 'value'=>NULL );
 		}
 
 		if (isset($rule['range']))
 		{
-			return $this->checkRange($value, $rule['range']);
+			$result = $this->checkRange($value, $rule['range']);
+			$result['value'] = ($result['result']) ? (int)$value : NULL;
+			return $result;
 		}
 
-		return $this->checkLength($value, $rule['length']);
+		$result = $this->checkLength($value, $rule['length']);
+		$result['value'] = ($result['result']) ? (int)$value : NULL;
+		return $result;
 
 	} // end of function check_Integer()
 
 
 	private function check_Alphabet($value, $rule)
 	{
-		if ( ! preg_match('/\A[a-zA-Z]*\Z/', $value) )
+		if ( ! preg_match('/\A[a-zA-Z]*\z/', $value) )
 		{
-			return false;
+			return array('result'=>false, 'value'=>NULL );
 		}
-
-		$defaultrule = array( 'length' => array('min'=>1, 'max'=>16) );
-		$rule = array_merge($defaultrule, $rule);
 
 		return $this->checkLength($value, $rule['length']);
 
@@ -340,74 +410,88 @@ class PuzzleBall
 	private function check_Number($value, $rule)
 	{
 
-		if ( ! preg_match('/\A[+-]{0,1}\d*\.?\d*\Z/', $value) )
+		if ( ! preg_match('/\A[+-]{0,1}\d*\.?\d*\z/', $value) )
 		{
-			return false;
+			return array('result'=>false, 'value'=>NULL );
 		}
-
-		$defaultrule = array( 'length' => array('min'=>1, 'max'=>3) );
-		$rule = array_merge($defaultrule, $rule);
 
 		if (isset($rule['range']))
 		{
-			return $this->checkRange($value, $rule['range']);
+			$result = $this->checkRange($value, $rule['range']);
+		}
+		else
+		{
+			$result = $this->checkLength($value, $rule['length']);
 		}
 
-		return $this->checkLength($value, $rule['length']);
+		if ( preg_match('/\./', $value) )
+		{
+			$value = (float)$value;
+		}
+		else
+		{
+			$value = (int)$value;
+		}
+
+		$result['value'] = $value;
+		return $result;
 
 	} // end of function check_Number()
 
 
-	private function check_AlphaNum($value, $rule)
+	private function check_Digit($value, $rule)
 	{
-		if ( ! preg_match('/\A[a-zA-Z0-9\.]*\Z/', $value) )
-		{
-			return false;
-		}
 
-		$defaultrule = array( 'length' => array('min'=>1, 'max'=>16) );
-		$rule = array_merge($defaultrule, $rule);
+		if ( ! preg_match('/\A[+-]{0,1}\d*\.?\d*\z/', $value) )
+		{
+			return array('result'=>false, 'value'=>NULL );
+		}
 
 		return $this->checkLength($value, $rule['length']);
 
-	} // end of function check_AlphaNum()
+	} // end of function check_Digit()
+
+
+	private function check_AlphaDigit($value, $rule)
+	{
+		if ( ! preg_match('/\A[a-zA-Z0-9\.]*\z/', $value) )
+		{
+			return array('result'=>false, 'value'=>NULL );
+		}
+
+		return $this->checkLength($value, $rule['length']);
+
+	} // end of function check_AlphaDigit()
 
 
 	private function check_WhiteList($value, $rule)
 	{
-		$defaultrule = array( 'list' => array() );
-		$rule = array_merge($defaultrule, $rule);
-
 		$list = $rule['list'];
 
-		if ( $value === strval(intval($value))  )
+		if ( $value === (string)((int)$value)  )
 		{
-			$value = intval($value);
+			$value = (int)$value;
 		}
-		else if ( $value === strval(floatval($value)) )
+		else if ( $value === (string)((float)$value) )
 		{
-			$value = floatval($value);
+			$value = (float)$value;
 		}
 
-		return in_array($value, $rule['list'], true);
+		return array('result'=>in_array($value, $rule['list'], true), 'value'=>$value);
 
 	} // end of function check_WhiteList()
 
 
 	private function check_UTF8($value, $rule)
 	{
-		$defaultrule = array( 'length' => array('min'=>1, 'max'=>3) );
-		$rule = array_merge($defaultrule, $rule);
-
 		// L = Alphabet
 		// N = Number
 		// Z = Separator
 		// P = Punctuation(句読記号)
 		// S = Symbol(記号)
-		// \r, \n
-		if ( ! preg_match('/\A[\pL|\pN|\pZ|\pP|\pS]+\Z/u', $value) )
+		if ( ! preg_match('/\A[\pL|\pN|\pZ|\pP|\pS]+\z/u', $value) )
 		{
-			return false;
+			return array('result'=>false, 'value'=>NULL );
 		}
 
 		return $this->checkLength($value, $rule['length']);
@@ -417,18 +501,15 @@ class PuzzleBall
 
 	private function check_UTF8TEXT($value, $rule)
 	{
-		$defaultrule = array( 'length' => array('min'=>1, 'max'=>3) );
-		$rule = array_merge($defaultrule, $rule);
-
 		// L = Alphabet
 		// N = Number
 		// Z = Separator
 		// P = Punctuation(句読記号)
 		// S = Symbol(記号)
-		// \r, \n
-		if ( ! preg_match('/\A(\pL|\pN|\pZ|\pP|\pS|\r|\n)+\Z/u', $value) )
+		// \r, \n, \t
+		if ( ! preg_match('/\A(\pL|\pN|\pZ|\pP|\pS|\r|\n|\t)+\z/u', $value) )
 		{
-			return false;
+			return array('result'=>false, 'value'=>NULL );
 		}
 
 		return $this->checkLength($value, $rule['length']);
@@ -441,7 +522,6 @@ class PuzzleBall
 		if ( isset($this->values[$key]) )
 		{
 			$val = $this->values[$key];
-//			unset($this->values[$key]);
 			return $val;
 		}
 		return NULL;
@@ -453,10 +533,23 @@ class PuzzleBall
 		if ( isset($this->cookies[$key]) )
 		{
 			$val = $this->cookies[$key];
-//			unset($this->cookies[$key]);
 			return $val;
 		}
 		return NULL;
 	} // end of function cookie()
+
+
+	public function env($key)
+	{
+		if ( isset($this->envs[$key]) )
+		{
+			$val = $this->envs[$key];
+			return $val;
+		}
+		return NULL;
+	} // end of function env()
+
 }
+
+PuzzleBall::make();
 
