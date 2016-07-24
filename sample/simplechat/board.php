@@ -16,10 +16,12 @@ date_default_timezone_set('Asia/Tokyo');
 <body>
 <?php
 $items = $msg->get();
-foreach ($items as $item) {
-	$time = date('Y/m/d H:i:s', $item['time']);
-	printf('<div><span>%1$s</span><span style="color:%2$s">[%3$s]%4$s</span></div>', $time, $item['color'], $item['name'], $item['message']);
-	echo "\n";
+if ( count($items) > 0) {
+	foreach ($items as $item) {
+		$time = date('Y/m/d H:i:s', $item['time']);
+		printf('<div><span>%1$s</span><span style="color:%2$s">[%3$s]%4$s</span></div>', $time, $item['color'], $item['name'], $item['message']);
+		echo "\n";
+	}
 }
 ?>
 </body>
