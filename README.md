@@ -277,4 +277,4 @@ require_once 'PuzzleBall.php';
 
 # そのほか
 
-$_INPUTは、対応予定ありません。
+$_FILESは、対応予定ありません。
